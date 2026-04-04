@@ -5,19 +5,15 @@ Production command management for kitchens, workshops, bakeries, and factories.
 Tracks items through preparation stations with real-time status updates.
 """
 
-from app.core.i18n import LazyString
 
 # ---------------------------------------------------------------------------
 # Module identity
 # ---------------------------------------------------------------------------
 MODULE_ID = "commands"
-MODULE_NAME = LazyString("Commands", module_id="commands")
+MODULE_NAME = "Commands"
 MODULE_VERSION = "2.0.0"
 MODULE_ICON = "clipboard-outline"
-MODULE_DESCRIPTION = LazyString(
-    "Production commands — kitchens, workshops, bakeries, factories",
-    module_id="commands",
-)
+MODULE_DESCRIPTION = "Production commands — kitchens, workshops, bakeries, factories"
 MODULE_AUTHOR = "ERPlora"
 MODULE_CATEGORY = "pos"
 
@@ -33,7 +29,7 @@ MODULE_INDUSTRIES = ["restaurant", "bar", "cafe", "fast_food", "catering"]
 # Menu (sidebar entry)
 # ---------------------------------------------------------------------------
 MENU = {
-    "label": LazyString("Commands", module_id="commands"),
+    "label": "Commands",
     "icon": "clipboard-outline",
     "order": 45,
     "show": True,
@@ -43,10 +39,10 @@ MENU = {
 # Navigation tabs (bottom tabbar in module views)
 # ---------------------------------------------------------------------------
 NAVIGATION = [
-    {"id": "dashboard", "label": LazyString("Overview", module_id="commands"), "icon": "grid-outline", "view": ""},
-    {"id": "active", "label": LazyString("Active", module_id="commands"), "icon": "time-outline", "view": "active"},
-    {"id": "history", "label": LazyString("History", module_id="commands"), "icon": "archive-outline", "view": "history"},
-    {"id": "settings", "label": LazyString("Settings", module_id="commands"), "icon": "settings-outline", "view": "settings"},
+    {"id": "dashboard", "label": "Overview", "icon": "grid-outline", "view": ""},
+    {"id": "active", "label": "Active", "icon": "time-outline", "view": "active"},
+    {"id": "history", "label": "History", "icon": "archive-outline", "view": "history"},
+    {"id": "settings", "label": "Settings", "icon": "settings-outline", "view": "settings"},
 ]
 
 # ---------------------------------------------------------------------------
@@ -67,16 +63,16 @@ SETTINGS = {
 # Permissions
 # ---------------------------------------------------------------------------
 PERMISSIONS = [
-    ("view_order", LazyString("Can view commands", module_id="commands")),
-    ("add_order", LazyString("Can add commands", module_id="commands")),
-    ("change_order", LazyString("Can change commands", module_id="commands")),
-    ("delete_order", LazyString("Can delete commands", module_id="commands")),
-    ("cancel_order", LazyString("Can cancel commands", module_id="commands")),
-    ("complete_order", LazyString("Can complete commands", module_id="commands")),
-    ("view_history", LazyString("Can view command history", module_id="commands")),
-    ("view_settings", LazyString("Can view settings", module_id="commands")),
-    ("change_settings", LazyString("Can change settings", module_id="commands")),
-    ("manage_settings", LazyString("Can manage commands settings", module_id="commands")),
+    ("view_order", "Can view commands"),
+    ("add_order", "Can add commands"),
+    ("change_order", "Can change commands"),
+    ("delete_order", "Can delete commands"),
+    ("cancel_order", "Can cancel commands"),
+    ("complete_order", "Can complete commands"),
+    ("view_history", "Can view command history"),
+    ("view_settings", "Can view settings"),
+    ("change_settings", "Can change settings"),
+    ("manage_settings", "Can manage commands settings"),
 ]
 
 ROLE_PERMISSIONS = {
