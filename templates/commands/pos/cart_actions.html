@@ -1,0 +1,21 @@
+<!-- Send to Kitchen -->
+<button class="btn color-warning btn-block"
+        @click="sendToKitchen()"
+        :disabled="cartItems.length === 0 || processing"
+        x-show="!orderFired">
+    {{ icon("flame-outline", class="mr-1") }}
+    {{ _("Send to Kitchen") }}
+</button>
+<template x-if="orderFired">
+    <div class="flex items-center gap-2">
+        <div class="callout callout-success flex-1">
+            <div class="callout-content">
+                <div class="callout-text text-sm">{{ _("Sent to kitchen") }}</div>
+            </div>
+        </div>
+        <button class="btn btn-outline btn-sm color-warning" @click="sendToKitchen()" :disabled="processing" title="{{ _('Send new round') }}">
+            {{ icon("add-outline", class="mr-1") }}
+            {{ _("Round") }}
+        </button>
+    </div>
+</template>

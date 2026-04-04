@@ -1,0 +1,68 @@
+<!-- Station Tabs -->
+<div class="p-4">
+    <div class="flex gap-2 overflow-x-auto pb-2 mb-4">
+        {% for station in stations %}
+        <button type="button"
+                hx-get="/m/commands/kds/{{ station.id }}"
+                hx-target="#main-content-area"
+                hx-push-url="true"
+                class="btn {% if current_station and current_station.id == station.id %}color-primary{% else %}btn-outline{% endif %} whitespace-nowrap">
+            {{ icon(station.icon) }}
+            {{ station.name }}
+        </button>
+        {% endfor %}
+    </div>
+
+    {% if current_station %}
+    <!-- KDS Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        {% for item in items %}
+        <div class="card {% if item.is_delayed %}border-danger{% endif %}">
+            <div class="card-header flex items-center justify-between"
+                 {% if item.is_delayed %}style="background: var(--color-error); color: white"{% endif %}>
+                <div class="flex items-center gap-2">
+                    <span class="font-bold">#{{ item.order_number }}</span>
+                    {% if item.priority == 'rush' %}
+                    <span class="badge color-error badge-sm">{{ _("RUSH") }}</span>
+                    {% elif item.priority == 'vip' %}
+                    <span class="badge color-warning badge-sm">{{ _("VIP") }}</span>
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-2 text-sm">
+                    <span>{{ item.table }}</span>
+                    <span class="{% if item.is_delayed %}font-bold{% else %}opacity-70{% endif %}">{{ item.elapsed_minutes }}{{ _("min") }}</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="text-lg font-bold mb-1">{{ item.quantity }}x {{ item.product_name }}</div>
+                {% if item.modifiers %}
+                <p class="text-sm text-primary mb-1">{{ item.modifiers }}</p>
+                {% endif %}
+                {% if item.notes %}
+                <p class="text-sm text-warning italic">{{ icon("alert-circle-outline", class="text-xs") }} {{ item.notes }}</p>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <button type="button" class="btn btn-block color-success"
+                        hx-post="/m/commands/items/{{ item.id }}/bump"
+                        hx-swap="none"
+                        hx-on::after-request="if(event.detail.successful) htmx.ajax('GET', window.location.href, '#main-content-area')">
+                    {{ icon("checkmark-outline") }} {{ _("BUMP") }}
+                </button>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-span-full p-8 text-center">
+            {{ icon("checkmark-circle-outline", class="text-4xl text-success mb-2") }}
+            <p class="text-muted">{{ _("All caught up! No pending items for this station.") }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- No station selected -->
+    <div class="p-12 text-center">
+        {{ icon("grid-outline", class="text-5xl text-muted mb-3") }}
+        <p class="text-lg text-muted">{{ _("Select a station to view items") }}</p>
+    </div>
+    {% endif %}
+</div>

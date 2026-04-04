@@ -1,0 +1,130 @@
+<!-- Status stats -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 p-4">
+    <div class="card">
+        <div class="card-body flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center">
+                {{ icon("time-outline", class="text-xl text-warning") }}
+            </div>
+            <div>
+                <div class="text-2xl font-bold">{{ pending_count }}</div>
+                <div class="text-xs text-muted">{{ _("Pending") }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                {{ icon("flame-outline", class="text-xl text-primary") }}
+            </div>
+            <div>
+                <div class="text-2xl font-bold">{{ preparing_count }}</div>
+                <div class="text-xs text-muted">{{ _("Preparing") }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
+                {{ icon("checkmark-circle-outline", class="text-xl text-success") }}
+            </div>
+            <div>
+                <div class="text-2xl font-bold">{{ ready_count }}</div>
+                <div class="text-xs text-muted">{{ _("Ready") }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-medium/10 flex items-center justify-center">
+                {{ icon("restaurant-outline", class="text-xl text-medium") }}
+            </div>
+            <div>
+                <div class="text-2xl font-bold">{{ served_count }}</div>
+                <div class="text-xs text-muted">{{ _("Served") }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters + New Order -->
+<div class="flex items-center gap-3 px-4 mb-4">
+    <select class="select flex-1"
+            hx-get="/m/commands/active"
+            hx-target="#main-content-area"
+            hx-push-url="true"
+            name="status">
+        <option value="">{{ _("All statuses") }}</option>
+        {% for value, label in status_choices %}
+        <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+    <select class="select flex-1"
+            hx-get="/m/commands/active"
+            hx-target="#main-content-area"
+            hx-push-url="true"
+            hx-include="previous select"
+            name="order_type">
+        <option value="">{{ _("All types") }}</option>
+        {% for value, label in order_type_choices %}
+        <option value="{{ value }}" {% if order_type_filter == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+    <a hx-get="/m/commands/create"
+       hx-target="#main-content-area"
+       hx-push-url="true"
+       class="btn color-primary">
+        {{ icon("add-outline") }}
+        <span class="hidden md:inline">{{ _("New") }}</span>
+    </a>
+</div>
+
+<!-- Orders list -->
+<div class="px-4">
+    <div class="card">
+        <div class="list">
+            {% for order in orders %}
+            <a hx-get="/m/commands/{{ order.id }}"
+               hx-target="#main-content-area"
+               hx-push-url="true"
+               class="list-item list-item-clickable">
+                <div class="list-item-start">
+                    <span class="badge color-{% if order.is_delayed %}error{% elif order.status == 'ready' %}success{% elif order.status == 'preparing' %}primary{% else %}warning{% endif %}">
+                        #{{ order.order_number }}
+                    </span>
+                </div>
+                <div class="list-item-content">
+                    <div class="list-item-label">
+                        {% if order.table_id %}{{ _("Table") }} {{ order.table_display }}{% else %}{{ order.order_type_display }}{% endif %}
+                        {% if order.priority == 'rush' %}
+                        <span class="badge color-error badge-sm ml-2">{{ _("RUSH") }}</span>
+                        {% elif order.priority == 'vip' %}
+                        <span class="badge color-warning badge-sm ml-2">{{ _("VIP") }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="list-item-note">
+                        {{ order.elapsed_minutes }}{{ _("min") }}
+                    </div>
+                </div>
+                <div class="list-item-end text-right">
+                    <div class="font-semibold">{{ order.total|default("—", true) }}</div>
+                    <span class="badge badge-sm color-{% if order.status == 'pending' %}warning{% elif order.status == 'preparing' %}primary{% elif order.status == 'ready' %}success{% else %}medium{% endif %}">
+                        {{ order.status_display }}
+                    </span>
+                </div>
+            </a>
+            {% else %}
+            <div class="p-8 text-center">
+                {{ icon("receipt-outline", class="text-4xl text-muted mb-2") }}
+                <p class="text-muted mb-4">{{ _("No active orders") }}</p>
+                <a hx-get="/m/commands/create"
+                   hx-target="#main-content-area"
+                   hx-push-url="true"
+                   class="btn color-primary">
+                    {{ icon("add-outline") }}
+                    {{ _("Create Order") }}
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>

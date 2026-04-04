@@ -1,0 +1,244 @@
+<div data-back-url="/m/commands/active" hidden></div>
+
+<div class="p-4">
+    <div class="card mb-4">
+        <div class="card-header">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="card-title">{{ _("Order") }} #{{ order.order_number }}</h2>
+                    <p class="text-sm opacity-60">
+                        {% if order.table_id %}{{ _("Table") }} {{ order.table_display }} &middot; {% endif %}
+                        {{ order.order_type_display }}
+                    </p>
+                </div>
+                <span class="badge badge-lg color-{% if order.status == 'pending' %}warning{% elif order.status == 'preparing' %}primary{% elif order.status == 'ready' %}success{% elif order.status == 'served' %}medium{% elif order.status == 'paid' %}success{% elif order.status == 'cancelled' %}error{% else %}medium{% endif %}" id="order-status-badge">
+                    {{ order.status_display }}
+                </span>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Stats row -->
+            <div class="grid grid-cols-3 gap-4 mb-4">
+                <div class="text-center">
+                    <div class="text-2xl font-bold">{{ items|length }}</div>
+                    <div class="text-xs text-muted">{{ _("Items") }}</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold">{{ order.elapsed_minutes }}{{ _("min") }}</div>
+                    <div class="text-xs text-muted">{{ _("Elapsed") }}</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold">R{{ order.round_number }}</div>
+                    <div class="text-xs text-muted">{{ _("Round") }}</div>
+                </div>
+            </div>
+
+            {% if order.priority == 'rush' or order.priority == 'vip' %}
+            <div class="badge color-{% if order.priority == 'rush' %}error{% else %}warning{% endif %} mb-3">
+                {{ icon("flash-outline") }} {{ order.priority_display }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Workflow Actions -->
+    {% if order.status != 'paid' and order.status != 'cancelled' %}
+    <div class="flex flex-wrap gap-2 mb-4" id="order-actions">
+        {% if order.status == 'pending' %}
+        <button type="button" class="btn color-primary flex-1"
+                onclick="orderAction('/m/commands/{{ order.id }}/fire', 'fire')">
+            {{ icon("flame-outline") }} {{ _("Fire Order") }}
+        </button>
+        {% endif %}
+
+        {% if order.status == 'preparing' %}
+        <button type="button" class="btn color-success flex-1"
+                onclick="orderAction('/m/commands/{{ order.id }}/bump', 'bump')">
+            {{ icon("checkmark-done-outline") }} {{ _("Bump Ready") }}
+        </button>
+        {% endif %}
+
+        {% if order.status == 'ready' %}
+        <button type="button" class="btn color-success flex-1"
+                onclick="orderAction('/m/commands/{{ order.id }}/serve', 'serve')">
+            {{ icon("restaurant-outline") }} {{ _("Mark Served") }}
+        </button>
+        <button type="button" class="btn color-warning flex-1"
+                onclick="orderAction('/m/commands/{{ order.id }}/recall', 'recall')">
+            {{ icon("arrow-undo-outline") }} {{ _("Recall") }}
+        </button>
+        {% endif %}
+
+        <a hx-get="/m/commands/{{ order.id }}/add-item"
+           hx-target="#main-content-area"
+           hx-push-url="true"
+           class="btn btn-outline flex-1">
+            {{ icon("add-outline") }} {{ _("Add Item") }}
+        </a>
+
+        <a hx-get="/m/commands/{{ order.id }}/edit"
+           hx-target="#main-content-area"
+           hx-push-url="true"
+           class="btn btn-outline">
+            {{ icon("create-outline") }}
+        </a>
+
+        <button type="button" class="btn btn-outline color-error"
+                onclick="cancelOrder()">
+            {{ icon("close-outline") }}
+        </button>
+    </div>
+    {% endif %}
+
+    <!-- Order Info -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">{{ _("Details") }}</h3>
+        </div>
+        <div class="list">
+            <div class="list-item">
+                <div class="list-item-start">{{ icon("time-outline", class="text-muted") }}</div>
+                <div class="list-item-content">
+                    <div class="list-item-label">{{ order.created_at|datetimeformat }}</div>
+                    <div class="list-item-note">{{ _("Created") }}</div>
+                </div>
+            </div>
+            {% if order.notes %}
+            <div class="list-item">
+                <div class="list-item-start">{{ icon("document-text-outline", class="text-muted") }}</div>
+                <div class="list-item-content">
+                    <div class="list-item-label">{{ order.notes }}</div>
+                    <div class="list-item-note">{{ _("Notes") }}</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Items -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <div class="flex items-center justify-between">
+                <h3 class="card-title">{{ _("Items") }}</h3>
+                <span class="badge">{{ items|length }}</span>
+            </div>
+        </div>
+        <div class="list">
+            {% for item in items %}
+            <div class="list-item">
+                <div class="list-item-start">
+                    <span class="font-semibold">{{ item.quantity }}x</span>
+                </div>
+                <div class="list-item-content">
+                    <div class="list-item-label">{{ item.product_name }}</div>
+                    <div class="list-item-note">
+                        {% if item.station %}{{ icon("navigate-outline", class="text-xs") }} {{ item.station.name }}{% endif %}
+                        {% if item.modifiers %} &middot; {{ item.modifiers }}{% endif %}
+                        {% if item.notes %} &middot; <em>{{ item.notes }}</em>{% endif %}
+                        {% if item.seat_number %} &middot; {{ _("Seat") }} {{ item.seat_number }}{% endif %}
+                    </div>
+                </div>
+                <div class="list-item-end text-right">
+                    <div class="font-semibold">{{ item.total }}</div>
+                    <span class="badge badge-sm color-{% if item.status == 'ready' %}success{% elif item.status == 'cancelled' %}error{% elif item.status == 'preparing' %}primary{% else %}warning{% endif %}">
+                        {{ item.status_display }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Financial Summary -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">{{ _("Summary") }}</h3>
+        </div>
+        <div class="list">
+            <div class="list-item">
+                <div class="list-item-content">
+                    <div class="list-item-label">{{ _("Subtotal") }}</div>
+                </div>
+                <div class="list-item-end font-semibold">{{ order.subtotal }}</div>
+            </div>
+            {% if order.discount %}
+            <div class="list-item">
+                <div class="list-item-content">
+                    <div class="list-item-label text-success">{{ _("Discount") }}</div>
+                </div>
+                <div class="list-item-end font-semibold text-success">-{{ order.discount }}</div>
+            </div>
+            {% endif %}
+            {% if order.tax %}
+            <div class="list-item">
+                <div class="list-item-content">
+                    <div class="list-item-label">{{ _("Tax") }}</div>
+                </div>
+                <div class="list-item-end font-semibold">{{ order.tax }}</div>
+            </div>
+            {% endif %}
+            <div class="list-item" style="border-top: 2px solid var(--color-base-300)">
+                <div class="list-item-content">
+                    <div class="list-item-label font-bold text-lg">{{ _("Total") }}</div>
+                </div>
+                <div class="list-item-end font-bold text-lg">{{ order.total }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danger Zone (delete) -->
+    {% if order.status == 'pending' %}
+    <div class="card mt-4" style="border-color: var(--color-error)">
+        <div class="card-header">
+            <h3 class="card-title text-error">{{ _("Danger Zone") }}</h3>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-3">{{ _("Permanently delete this order. This action cannot be undone.") }}</p>
+            <button type="button" class="btn btn-outline color-error"
+                    onclick="deleteOrder()">
+                {{ icon("trash-outline") }} {{ _("Delete Order") }}
+            </button>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script nonce="{{ csp_nonce }}">
+function orderAction(url, action) {
+    fetch(url, {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCookie('csrftoken')}}).then(r => r.json()).then(data => {
+        if (data.success) {
+            htmx.ajax('GET', '/m/commands/{{ order.id }}', '#main-content-area');
+        }
+    });
+}
+
+function cancelOrder() {
+    if (confirm('{{ _("Cancel this order?") }}')) {
+        const reason = prompt('{{ _("Reason (optional):") }}') || '';
+        fetch('/m/commands/{{ order.id }}/cancel', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'reason=' + encodeURIComponent(reason)}).then(r => r.json()).then(data => {
+            if (data.success) {
+                htmx.ajax('GET', '/m/commands/active', '#main-content-area');
+            }
+        });
+    }
+}
+
+function deleteOrder() {
+    if (confirm('{{ _("Delete this order permanently?") }}')) {
+        fetch('/m/commands/{{ order.id }}/delete', {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCookie('csrftoken')}}).then(r => r.json()).then(data => {
+            if (data.success) {
+                htmx.ajax('GET', '/m/commands/active', '#main-content-area');
+            }
+        });
+    }
+}
+</script>

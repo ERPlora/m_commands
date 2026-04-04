@@ -1,0 +1,18 @@
+{
+  "id": "commands",
+  "name": "Commands",
+  "version": "2.0.0",
+  "description": "Production commands — kitchens, workshops, bakeries, factories",
+  "author": "ERPlora",
+  "category": "pos",
+  "icon": "clipboard-outline",
+  "has_models": true,
+  "dependencies": ["tables", "sales", "customers", "inventory"],
+  "min_core_version": "0.1.0",
+  "tags": ["pos", "kitchen", "orders", "commands", "kds", "hospitality"],
+  "screenshots": [],
+  "changelog": {
+    "2.0.0": "Migration to Hub Next (FastAPI + SQLAlchemy)",
+    "1.0.0": "Initial release"
+  }
+}

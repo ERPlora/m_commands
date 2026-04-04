@@ -1,0 +1,205 @@
+<div class="p-4">
+    <!-- Overview Stats -->
+    <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="card">
+            <div class="card-body flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    {{ icon("receipt-outline", class="text-xl text-primary") }}
+                </div>
+                <div>
+                    <div class="text-2xl font-bold">{{ today_orders_count }}</div>
+                    <div class="text-xs text-muted">{{ _("Today's Orders") }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
+                    {{ icon("cash-outline", class="text-xl text-success") }}
+                </div>
+                <div>
+                    <div class="text-2xl font-bold">{{ today_revenue }}</div>
+                    <div class="text-xs text-muted">{{ _("Today's Revenue") }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kitchen Display Settings -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">{{ icon("restaurant-outline", class="text-primary") }} {{ _("Kitchen Display") }}</h3>
+        </div>
+        <div class="list">
+            <div class="list-item">
+                <div class="list-item-content">
+                    <div class="list-item-label">{{ _("Auto Print Tickets") }}</div>
+                    <div class="list-item-note">{{ _("Print kitchen tickets automatically when orders fire") }}</div>
+                </div>
+                <div class="list-item-end">
+                    <label class="toggle">
+                        <input type="checkbox" name="auto_print_tickets"
+                               {% if config.auto_print_tickets %}checked{% endif %}
+                               hx-post="/m/commands/settings/toggle"
+                               hx-vals='js:{name: "auto_print_tickets", value: event.target.checked ? "true" : "false"}'
+                               hx-swap="none">
+                    </label>
+                </div>
+            </div>
+            <div class="list-item">
+                <div class="list-item-content">
+                    <div class="list-item-label">{{ _("Show Prep Time") }}</div>
+                    <div class="list-item-note">{{ _("Display elapsed preparation time on orders") }}</div>
+                </div>
+                <div class="list-item-end">
+                    <label class="toggle">
+                        <input type="checkbox" name="show_prep_time"
+                               {% if config.show_prep_time %}checked{% endif %}
+                               hx-post="/m/commands/settings/toggle"
+                               hx-vals='js:{name: "show_prep_time", value: event.target.checked ? "true" : "false"}'
+                               hx-swap="none">
+                    </label>
+                </div>
+            </div>
+            <div class="list-item">
+                <div class="list-item-content">
+                    <div class="list-item-label">{{ _("Alert Threshold") }}</div>
+                    <div class="list-item-note">{{ _("Minutes before flagging an order as delayed") }}</div>
+                </div>
+                <div class="list-item-end">
+                    <input type="number" name="alert_threshold_minutes"
+                           value="{{ config.alert_threshold_minutes }}"
+                           class="input input--sm"
+                           style="width: 80px;"
+                           hx-post="/m/commands/settings/input"
+                           hx-vals='js:{name: "alert_threshold_minutes", value: event.target.value}'
+                           hx-trigger="change"
+                           hx-swap="none"
+                           min="1" max="120">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Behavior -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">{{ icon("settings-outline", class="text-warning") }} {{ _("Order Behavior") }}</h3>
+        </div>
+        <div class="list">
+            <div class="list-item">
+                <div class="list-item-content">
+                    <div class="list-item-label">{{ _("Use Rounds/Courses") }}</div>
+                    <div class="list-item-note">{{ _("Group order items by course number") }}</div>
+                </div>
+                <div class="list-item-end">
+                    <label class="toggle">
+                        <input type="checkbox" name="use_rounds"
+                               {% if config.use_rounds %}checked{% endif %}
+                               hx-post="/m/commands/settings/toggle"
+                               hx-vals='js:{name: "use_rounds", value: event.target.checked ? "true" : "false"}'
+                               hx-swap="none">
+                    </label>
+                </div>
+            </div>
+            <div class="list-item">
+                <div class="list-item-content">
+                    <div class="list-item-label">{{ _("Auto-fire on Round") }}</div>
+                    <div class="list-item-note">{{ _("Automatically fire items when round is complete") }}</div>
+                </div>
+                <div class="list-item-end">
+                    <label class="toggle">
+                        <input type="checkbox" name="auto_fire_on_round"
+                               {% if config.auto_fire_on_round %}checked{% endif %}
+                               hx-post="/m/commands/settings/toggle"
+                               hx-vals='js:{name: "auto_fire_on_round", value: event.target.checked ? "true" : "false"}'
+                               hx-swap="none">
+                    </label>
+                </div>
+            </div>
+            <div class="list-item">
+                <div class="list-item-content">
+                    <div class="list-item-label">{{ _("Sound on New Order") }}</div>
+                    <div class="list-item-note">{{ _("Play notification sound when a new order arrives") }}</div>
+                </div>
+                <div class="list-item-end">
+                    <label class="toggle">
+                        <input type="checkbox" name="sound_on_new_order"
+                               {% if config.sound_on_new_order %}checked{% endif %}
+                               hx-post="/m/commands/settings/toggle"
+                               hx-vals='js:{name: "sound_on_new_order", value: event.target.checked ? "true" : "false"}'
+                               hx-swap="none">
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">{{ icon("link-outline") }} {{ _("Quick Actions") }}</h3>
+        </div>
+        <div class="list">
+            <a hx-get="/m/commands/stations"
+               hx-target="#main-content-area"
+               hx-push-url="true"
+               class="list-item list-item-clickable">
+                <div class="list-item-start">{{ icon("grid-outline", class="text-primary") }}</div>
+                <div class="list-item-content">
+                    <div class="list-item-label">{{ _("Kitchen Stations") }}</div>
+                    <div class="list-item-note">{{ stations|length }} {{ _("stations configured") }}</div>
+                </div>
+                <div class="list-item-end">{{ icon("chevron-forward-outline", class="text-muted") }}</div>
+            </a>
+            <a hx-get="/m/commands/routing"
+               hx-target="#main-content-area"
+               hx-push-url="true"
+               class="list-item list-item-clickable">
+                <div class="list-item-start">{{ icon("git-branch-outline", class="text-warning") }}</div>
+                <div class="list-item-content">
+                    <div class="list-item-label">{{ _("Order Routing") }}</div>
+                    <div class="list-item-note">{{ _("Route products to stations") }}</div>
+                </div>
+                <div class="list-item-end">{{ icon("chevron-forward-outline", class="text-muted") }}</div>
+            </a>
+            <a hx-get="/m/commands/kds"
+               hx-target="#main-content-area"
+               hx-push-url="true"
+               class="list-item list-item-clickable">
+                <div class="list-item-start">{{ icon("desktop-outline", class="text-success") }}</div>
+                <div class="list-item-content">
+                    <div class="list-item-label">{{ _("Kitchen Display") }}</div>
+                    <div class="list-item-note">{{ _("Open kitchen display system") }}</div>
+                </div>
+                <div class="list-item-end">{{ icon("chevron-forward-outline", class="text-muted") }}</div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Reset -->
+    <div class="card" style="border-color: var(--color-warning)">
+        <div class="card-header">
+            <h3 class="card-title text-warning">{{ _("Reset Settings") }}</h3>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-3">{{ _("Restore all order settings to their default values.") }}</p>
+            <button type="button" class="btn color-warning btn-outline"
+                    onclick="resetSettings()">
+                {{ icon("refresh-outline") }} {{ _("Reset to Defaults") }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+function resetSettings() {
+    if (confirm('{{ _("Reset all settings to defaults?") }}')) {
+        fetch('/m/commands/settings/reset', {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCookie('csrftoken')}}).then(r => {
+            if (r.ok) htmx.ajax('GET', '/m/commands/settings', '#main-content-area');
+        });
+    }
+}
+</script>

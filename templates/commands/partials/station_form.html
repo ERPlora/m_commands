@@ -1,0 +1,82 @@
+<div data-back-url="/m/commands/stations" hidden></div>
+
+<div class="p-4">
+    <form method="post"
+          hx-post=""
+          hx-target="#main-content-area">
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">{% if is_new %}{{ _("New Station") }}{% else %}{{ _("Edit Station") }} — {{ station.name }}{% endif %}</h3>
+            </div>
+            <div class="card-body">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-group-label mb-1">{{ _("Name") }}</label>
+                        <input type="text" name="name" class="input" placeholder="{{ _('Station name') }}" value="{% if not is_new %}{{ station.name }}{% endif %}" required>
+                    </div>
+                    <div>
+                        <label class="form-group-label mb-1">{{ _("Icon") }}</label>
+                        <input type="text" name="icon" class="input" placeholder="flame-outline" value="{% if not is_new %}{{ station.icon }}{% else %}flame-outline{% endif %}">
+                    </div>
+                    <div>
+                        <label class="form-group-label mb-1">{{ _("Color") }}</label>
+                        <input type="color" name="color" class="input" value="{% if not is_new %}{{ station.color }}{% else %}#F97316{% endif %}">
+                    </div>
+                    <div>
+                        <label class="form-group-label mb-1">{{ _("Printer Name") }}</label>
+                        <input type="text" name="printer_name" class="input" placeholder="{{ _('System printer name') }}" value="{% if not is_new %}{{ station.printer_name }}{% endif %}">
+                    </div>
+                    <div>
+                        <label class="form-group-label mb-1">{{ _("Sort Order") }}</label>
+                        <input type="number" name="sort_order" class="input" min="0" value="{% if not is_new %}{{ station.sort_order }}{% else %}0{% endif %}">
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <label class="toggle">
+                            <input type="checkbox" name="is_active" {% if is_new or station.is_active %}checked{% endif %}>
+                        </label>
+                        <span>{{ _("Active") }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-lg btn-block color-primary">
+            {% if is_new %}
+            {{ icon("add-outline") }} {{ _("Create Station") }}
+            {% else %}
+            {{ icon("checkmark-outline") }} {{ _("Save Changes") }}
+            {% endif %}
+        </button>
+    </form>
+
+    {% if not is_new %}
+    <!-- Danger Zone -->
+    <div class="card mt-6" style="border-color: var(--color-error)">
+        <div class="card-header">
+            <h3 class="card-title text-error">{{ _("Danger Zone") }}</h3>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-3">{{ _("Permanently delete this station. Items routed here will need to be reassigned.") }}</p>
+            <button type="button" class="btn btn-outline color-error"
+                    onclick="deleteStation()">
+                {{ icon("trash-outline") }} {{ _("Delete Station") }}
+            </button>
+        </div>
+    </div>
+
+    <script nonce="{{ csp_nonce }}">
+    function deleteStation() {
+        if (confirm('{{ _("Delete this station?") }}')) {
+            fetch('/m/commands/stations/{{ station.id }}/delete', {
+                method: 'POST',
+                headers: {'X-CSRFToken': getCookie('csrftoken')}}).then(r => r.json()).then(data => {
+                if (data.success) {
+                    htmx.ajax('GET', '/m/commands/stations', '#main-content-area');
+                }
+            });
+        }
+    }
+    </script>
+    {% endif %}
+</div>

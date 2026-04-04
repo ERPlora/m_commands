@@ -1,0 +1,60 @@
+<div data-back-url="{% if is_new %}/m/commands/active{% else %}/m/commands/{{ order.id }}{% endif %}" hidden></div>
+
+<div class="p-4">
+    <form method="post"
+          hx-post=""
+          hx-target="#main-content-area">
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">{% if is_new %}{{ _("New Order") }}{% else %}{{ _("Edit Order") }} #{{ order.order_number }}{% endif %}</h3>
+            </div>
+            <div class="card-body">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-group-label mb-1">{{ _("Order Type") }}</label>
+                        <select name="order_type" class="select">
+                            <option value="dine_in" {% if not is_new and order.order_type == 'dine_in' %}selected{% endif %}>{{ _("Dine In") }}</option>
+                            <option value="takeaway" {% if not is_new and order.order_type == 'takeaway' %}selected{% endif %}>{{ _("Takeaway") }}</option>
+                            <option value="delivery" {% if not is_new and order.order_type == 'delivery' %}selected{% endif %}>{{ _("Delivery") }}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-group-label mb-1">{{ _("Priority") }}</label>
+                        <select name="priority" class="select">
+                            <option value="normal" {% if not is_new and order.priority == 'normal' %}selected{% endif %}>{{ _("Normal") }}</option>
+                            <option value="rush" {% if not is_new and order.priority == 'rush' %}selected{% endif %}>{{ _("Rush") }}</option>
+                            <option value="vip" {% if not is_new and order.priority == 'vip' %}selected{% endif %}>{{ _("VIP") }}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">{{ _("Additional Info") }}</h3>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <label class="form-group-label mb-1">{{ _("Notes") }}</label>
+                    <textarea name="notes" class="textarea" rows="3" placeholder="{{ _('Order notes') }}">{% if not is_new %}{{ order.notes }}{% endif %}</textarea>
+                </div>
+                {% if not is_new %}
+                <div>
+                    <label class="form-group-label mb-1">{{ _("Round") }}</label>
+                    <input type="number" name="round_number" class="input" min="1" value="{{ order.round_number }}">
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-lg btn-block color-primary">
+            {% if is_new %}
+            {{ icon("add-outline") }} {{ _("Create Order") }}
+            {% else %}
+            {{ icon("checkmark-outline") }} {{ _("Save Changes") }}
+            {% endif %}
+        </button>
+    </form>
+</div>

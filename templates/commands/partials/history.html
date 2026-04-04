@@ -1,0 +1,109 @@
+<div class="p-4">
+    <!-- Stats -->
+    <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="card">
+            <div class="card-body flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
+                    {{ icon("receipt-outline", class="text-xl text-success") }}
+                </div>
+                <div>
+                    <div class="text-2xl font-bold">{{ orders_count }}</div>
+                    <div class="text-xs text-muted">{{ _("Completed") }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    {{ icon("cash-outline", class="text-xl text-primary") }}
+                </div>
+                <div>
+                    <div class="text-2xl font-bold">{{ total_revenue }}</div>
+                    <div class="text-xs text-muted">{{ _("Revenue") }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search + Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form hx-get="/m/commands/history"
+                  hx-target="#main-content-area"
+                  hx-push-url="true"
+                  hx-trigger="submit, change from:select">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="input-group flex-1">
+                        <span class="input-group-start">{{ icon("search-outline") }}</span>
+                        <input type="search" name="q" value="{{ search_query }}"
+                               class="input" placeholder="{{ _('Search orders...') }}"
+                               hx-trigger="keyup changed delay:300ms">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <select name="status" class="select">
+                        <option value="">{{ _("All statuses") }}</option>
+                        {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="order_type" class="select">
+                        <option value="">{{ _("All types") }}</option>
+                        {% for value, label in order_type_choices %}
+                        <option value="{{ value }}" {% if order_type_filter == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="date" name="date_from" value="{{ date_from }}"
+                           class="input" placeholder="{{ _('From') }}">
+                    <input type="date" name="date_to" value="{{ date_to }}"
+                           class="input" placeholder="{{ _('To') }}">
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="card">
+        <div class="table-wrapper">
+            <table class="table">
+                <caption class="sr-only">History</caption>
+                <thead>
+                    <tr>
+                        <th>{{ _("Order") }}</th>
+                        <th class="hidden md:table-cell">{{ _("Type") }}</th>
+                        <th>{{ _("Date") }}</th>
+                        <th>{{ _("Status") }}</th>
+                        <th class="text-right">{{ _("Total") }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr class="cursor-pointer"
+                        hx-get="/m/commands/{{ order.id }}"
+                        hx-target="#main-content-area"
+                        hx-push-url="true">
+                        <td>
+                            <span class="font-semibold">#{{ order.order_number }}</span>
+                        </td>
+                        <td class="hidden md:table-cell">{{ order.order_type_display }}</td>
+                        <td>{{ order.created_at|datetimeformat }}</td>
+                        <td>
+                            <span class="badge badge-sm color-{% if order.status == 'paid' %}success{% elif order.status == 'cancelled' %}error{% elif order.status == 'served' %}medium{% else %}primary{% endif %}">
+                                {{ order.status_display }}
+                            </span>
+                        </td>
+                        <td class="text-right font-semibold">{{ order.total }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center py-8">
+                            {{ icon("archive-outline", class="text-3xl text-muted mb-2") }}
+                            <p class="text-muted">{{ _("No orders found") }}</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

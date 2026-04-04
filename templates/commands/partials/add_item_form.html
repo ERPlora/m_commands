@@ -1,0 +1,51 @@
+<div data-back-url="/m/commands/{{ order.id }}" hidden></div>
+
+<div class="p-4">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">{{ _("Add Item to Order") }} #{{ order.order_number }}</h3>
+            <p class="text-sm opacity-60">
+                {% if order.table_id %}{{ _("Table") }} {{ order.table_display }}{% endif %}
+            </p>
+        </div>
+        <div class="card-body">
+            <form method="post"
+                  hx-post="/m/commands/{{ order.id }}/add-item"
+                  hx-target="#main-content-area">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="form-group-label mb-1">{{ _("Product Name") }}</label>
+                        <input type="text" name="product_name" class="input" placeholder="{{ _('Product name') }}">
+                    </div>
+                    <div>
+                        <label class="form-group-label mb-1">{{ _("Quantity") }}</label>
+                        <input type="number" name="quantity" class="input" min="1" value="1">
+                    </div>
+                    <div>
+                        <label class="form-group-label mb-1">{{ _("Unit Price") }}</label>
+                        <input type="number" name="unit_price" class="input" step="0.01" min="0" value="0">
+                    </div>
+                    <div>
+                        <label class="form-group-label mb-1">{{ _("Seat Number") }}</label>
+                        <input type="number" name="seat_number" class="input" min="1" placeholder="{{ _('Seat #') }}">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-group-label mb-1">{{ _("Modifiers") }}</label>
+                    <input type="text" name="modifiers" class="input" placeholder="{{ _('e.g. No onions, Extra cheese') }}">
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-group-label mb-1">{{ _("Notes") }}</label>
+                    <textarea name="notes" class="textarea" rows="2" placeholder="{{ _('Special instructions') }}"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-lg btn-block color-primary">
+                    {{ icon("add-outline") }} {{ _("Add Item") }}
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

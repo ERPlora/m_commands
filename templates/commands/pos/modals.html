@@ -1,0 +1,64 @@
+<script nonce="{{ csp_nonce }}">
+(function() {
+    // Orders POS integration — self-contained
+    window._ordersPos = {
+        async sendToKitchen() {
+            if (this.cartItems.length === 0) {
+                showToast('{{ _("Cart is empty") }}', 'warning');
+                return;
+            }
+
+            this.processing = true;
+            try {
+                var orderData = {
+                    items: this.cartItems.map(function(item) {
+                        return {
+                            product_id: item.product_id,
+                            product_name: item.name,
+                            unit_price: item.price,
+                            quantity: item.quantity,
+                            notes: item.notes || '',
+                        };
+                    }),
+                    table_id: this.selectedTable ? this.selectedTable.id : null,
+                    order_type: this.selectedTable ? 'dine_in' : 'takeaway',
+                    auto_route: true,
+                };
+
+                // If we already have an order, add items to it as a new round
+                if (this.currentOrderId) {
+                    orderData.round_number = 2;
+                }
+
+                var response = await fetch('/m/commands/api/orders/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                    },
+                    body: JSON.stringify(orderData),
+                });
+
+                var result = await response.json();
+                if (result.success) {
+                    this.currentOrderId = result.order_id;
+                    this.orderFired = true;
+                    showToast('{{ _("Order sent to kitchen") }} #' + result.order_number, 'success');
+
+                    // Fire the order to kitchen
+                    await fetch('/m/commands/' + result.order_id + '/fire', {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                    });
+                } else {
+                    showToast(result.error || '{{ _("Error creating order") }}', 'error');
+                }
+            } catch (e) {
+                showToast('{{ _("Network error") }}: ' + e.message, 'error');
+            } finally {
+                this.processing = false;
+            }
+        },
+    };
+})();
+</script>

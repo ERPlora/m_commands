@@ -1,0 +1,91 @@
+<div class="p-4">
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h3 class="text-lg font-semibold">{{ _("Order Routing") }}</h3>
+            <p class="text-sm text-muted">{{ _("Route products and categories to kitchen stations") }}</p>
+        </div>
+    </div>
+
+    <!-- Available Stations -->
+    {% if stations %}
+    <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
+        {% for station in stations %}
+        <div class="badge badge-lg" style="background: {{ station.color }}20; color: {{ station.color }}; border: 1px solid {{ station.color }}40">
+            {{ icon(station.icon) }} {{ station.name }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Product Routing -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <div class="flex items-center justify-between">
+                <h3 class="card-title">{{ icon("cube-outline", class="text-primary") }} {{ _("Product Routing") }}</h3>
+                <span class="badge">{{ product_mappings|length }}</span>
+            </div>
+        </div>
+        <div class="list">
+            {% for mapping in product_mappings %}
+            <div class="list-item">
+                <div class="list-item-content">
+                    <div class="list-item-label">{{ mapping.product_id }}</div>
+                    <div class="list-item-note">
+                        {{ icon("arrow-forward-outline", class="text-xs") }}
+                        <span style="color: {{ mapping.station.color }}">{{ icon(mapping.station.icon, class="text-xs") }} {{ mapping.station.name }}</span>
+                    </div>
+                </div>
+                <div class="list-item-end">
+                    <button type="button" class="btn btn-sm btn-ghost text-error"
+                            hx-post="/m/commands/routing/product/{{ mapping.product_id }}/remove"
+                            hx-swap="none"
+                            hx-confirm="{{ _('Remove this product routing?') }}"
+                            hx-on::after-request="if(event.detail.successful) htmx.ajax('GET', '/m/commands/routing', '#main-content-area')">
+                        {{ icon("close-outline") }}
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <div class="p-6 text-center">
+                <p class="text-muted text-sm">{{ _("No product routings. Products will use category routing as fallback.") }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Category Routing -->
+    <div class="card">
+        <div class="card-header">
+            <div class="flex items-center justify-between">
+                <h3 class="card-title">{{ icon("folder-outline", class="text-warning") }} {{ _("Category Routing") }}</h3>
+                <span class="badge">{{ category_mappings|length }}</span>
+            </div>
+        </div>
+        <div class="list">
+            {% for mapping in category_mappings %}
+            <div class="list-item">
+                <div class="list-item-content">
+                    <div class="list-item-label">{{ mapping.category_id }}</div>
+                    <div class="list-item-note">
+                        {{ icon("arrow-forward-outline", class="text-xs") }}
+                        <span style="color: {{ mapping.station.color }}">{{ icon(mapping.station.icon, class="text-xs") }} {{ mapping.station.name }}</span>
+                    </div>
+                </div>
+                <div class="list-item-end">
+                    <button type="button" class="btn btn-sm btn-ghost text-error"
+                            hx-post="/m/commands/routing/category/{{ mapping.category_id }}/remove"
+                            hx-swap="none"
+                            hx-confirm="{{ _('Remove this category routing?') }}"
+                            hx-on::after-request="if(event.detail.successful) htmx.ajax('GET', '/m/commands/routing', '#main-content-area')">
+                        {{ icon("close-outline") }}
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <div class="p-6 text-center">
+                <p class="text-muted text-sm">{{ _("No category routings configured yet.") }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
