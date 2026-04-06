@@ -32,6 +32,7 @@
                   hx-target="#main-content-area"
                   hx-push-url="true"
                   hx-trigger="submit, change from:select">
+                      {{ csrf_input() }}
                 <div class="flex items-center gap-3 mb-3">
                     <div class="input-group flex-1">
                         <span class="input-group-start">{{ icon("search-outline") }}</span>
