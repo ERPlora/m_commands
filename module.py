@@ -11,7 +11,7 @@ Tracks items through preparation stations with real-time status updates.
 # ---------------------------------------------------------------------------
 MODULE_ID = "commands"
 MODULE_NAME = "Commands"
-MODULE_VERSION = "2.0.0"
+MODULE_VERSION = "2.1.0"
 MODULE_ICON = "clipboard-outline"
 MODULE_DESCRIPTION = "Production commands — kitchens, workshops, bakeries, factories"
 MODULE_AUTHOR = "ERPlora"

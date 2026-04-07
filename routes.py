@@ -8,6 +8,7 @@ Mounted at /m/commands/ by ModuleRuntime.
 
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import datetime, UTC
 from decimal import Decimal
@@ -16,11 +17,13 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy import func, or_
 from sqlalchemy.orm import selectinload
+from starlette.websockets import WebSocket
 
 from app.core.db.query import HubQuery
 from app.core.db.transactions import atomic
 from app.core.dependencies import CurrentUser, DbSession, HubId
 from app.core.htmx import add_message, htmx_redirect, htmx_view
+from app.core.ws import ws_send
 
 from .models import (
     ORDER_TYPE_CHOICES,
@@ -1252,3 +1255,160 @@ async def settings_reset(
     config.default_order_type = "dine_in"
     await db.flush()
     return JSONResponse(status_code=204, content=None)
+
+
+# =============================================================================
+# WebSocket — real-time order/command push notifications
+# =============================================================================
+
+logger = logging.getLogger(__name__)
+
+# In-memory connection manager: hub_id → list of connected WebSockets.
+_commands_connections: dict[str, list[WebSocket]] = {}
+
+
+async def notify_commands_clients(hub_id: str, event: dict) -> None:
+    """Push event to all connected commands WebSocket clients for this hub.
+
+    Safe to call from any module — silently skips disconnected clients.
+    """
+    dead: list[WebSocket] = []
+    for ws in _commands_connections.get(hub_id, []):
+        ok = await ws_send(ws, event)
+        if not ok:
+            dead.append(ws)
+    # Prune dead connections
+    if dead:
+        conns = _commands_connections.get(hub_id, [])
+        for ws in dead:
+            try:
+                conns.remove(ws)
+            except ValueError:
+                pass
+
+
+@router.websocket("/ws/orders")
+async def commands_ws(websocket: WebSocket):
+    """WebSocket for real-time command/order updates.
+
+    Protocol:
+        Server → Client: {"type": "orders_updated", "orders": [...], "stats": {...}}
+        Server → Client: {"type": "order_created", "order": {...}}
+        Server → Client: {"type": "order_status_changed", "order_id": "...", "status": "..."}
+        Server → Client: {"type": "pong"}
+        Client → Server: {"type": "ping"}
+    """
+    from app.core.middleware.session import get_session_data
+
+    # --- Authenticate via session cookie ---
+    session_data = get_session_data(websocket)
+    user_id = session_data.get("user_id")
+    hub_id = session_data.get("hub_id")
+
+    if not user_id or not hub_id:
+        await websocket.close(code=4001, reason="Unauthorized")
+        return
+
+    hub_id_str = str(hub_id)
+
+    # --- Register connection ---
+    if hub_id_str not in _commands_connections:
+        _commands_connections[hub_id_str] = []
+    _commands_connections[hub_id_str].append(websocket)
+
+    logger.info("Commands WS connected: hub=%s user=%s", hub_id_str, user_id)
+
+    async def _on_message(data: dict, ws: WebSocket) -> None:
+        """Handle incoming client messages."""
+        msg_type = data.get("type", "")
+        if msg_type == "refresh":
+            # Client requests a full refresh of active orders
+            await _push_orders_snapshot(ws, hub_id_str)
+
+    try:
+        # --- Push initial order list on connect ---
+        await websocket.accept()
+        await _push_orders_snapshot(websocket, hub_id_str)
+
+        # Run the message loop (handles ping/pong + keepalive).
+        import asyncio
+        import json
+        from starlette.websockets import WebSocketDisconnect, WebSocketState
+        from app.core.ws import WS_PING_INTERVAL, _ping_loop
+
+        ping_task = asyncio.create_task(_ping_loop(websocket, WS_PING_INTERVAL))
+        try:
+            while True:
+                raw = await websocket.receive_text()
+                try:
+                    msg = json.loads(raw)
+                except (json.JSONDecodeError, TypeError):
+                    await ws_send(websocket, {"type": "error", "message": "Invalid JSON"})
+                    continue
+
+                if msg.get("type") == "ping":
+                    await ws_send(websocket, {"type": "pong"})
+                    continue
+
+                try:
+                    await _on_message(msg, websocket)
+                except Exception:
+                    logger.exception("Error handling commands WS message")
+                    await ws_send(websocket, {"type": "error", "message": "Internal server error"})
+
+        except WebSocketDisconnect:
+            logger.info("Commands WS disconnected: hub=%s user=%s", hub_id_str, user_id)
+        except Exception:
+            logger.exception("Commands WS error: hub=%s", hub_id_str)
+        finally:
+            ping_task.cancel()
+            if websocket.client_state == WebSocketState.CONNECTED:
+                try:
+                    await websocket.close()
+                except Exception:
+                    pass
+    finally:
+        # --- Unregister connection ---
+        conns = _commands_connections.get(hub_id_str, [])
+        try:
+            conns.remove(websocket)
+        except ValueError:
+            pass
+        if not conns:
+            _commands_connections.pop(hub_id_str, None)
+
+
+async def _push_orders_snapshot(ws: WebSocket, hub_id_str: str) -> None:
+    """Send the current active orders + stats to a single WebSocket client."""
+    from app.config.database import async_session_factory
+
+    async with async_session_factory() as db:
+        orders = await HubQuery(Order, db, hub_id_str).filter(
+            Order.status.in_(["pending", "preparing", "ready", "served"]),
+        ).order_by(Order.created_at.desc()).all()
+
+        counts: dict[str, int] = {}
+        for o in orders:
+            counts[o.status] = counts.get(o.status, 0) + 1
+
+        orders_data = [{
+            "id": str(o.id),
+            "order_number": o.order_number,
+            "table": o.table_display,
+            "status": o.status,
+            "priority": o.priority,
+            "order_type": o.order_type,
+            "elapsed_minutes": o.elapsed_minutes,
+            "is_delayed": o.is_delayed,
+        } for o in orders]
+
+    await ws_send(ws, {
+        "type": "orders_updated",
+        "orders": orders_data,
+        "stats": {
+            "pending": counts.get("pending", 0),
+            "preparing": counts.get("preparing", 0),
+            "ready": counts.get("ready", 0),
+            "served": counts.get("served", 0),
+        },
+    })
