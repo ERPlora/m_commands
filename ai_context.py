@@ -68,6 +68,14 @@ CONTEXT = """
 - Order -> Sale (sales_sale.orders) — linked on payment
 - OrderItem -> KitchenStation (kitchen display routing)
 - Order -> kitchen.KitchenOrderLog (audit trail)
+
+## Restrictions
+- Cannot delete an order that is linked to a Sale (sale_id is set). Void or refund the sale first.
+- Order delete is a soft-delete (is_deleted=True), not a hard delete.
+- Only pending or cancelled orders can be deleted.
+- Cannot create order items with invalid product IDs — product must exist in inventory.
+- Cannot delete a kitchen station that has active routing mappings (ProductStation/CategoryStation).
+- Cannot delete a kitchen station with active order items in progress (pending/preparing).
 """
 
 SOPS = [

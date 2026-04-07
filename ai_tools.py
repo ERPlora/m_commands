@@ -275,7 +275,7 @@ class CreateOrder(AssistantTool):
         for item_data in args.get("items", []):
             product_id = item_data["product_id"]
 
-            # Try to get product info from inventory
+            # Get product info from inventory — product must exist
             product_name = ""
             unit_price = Decimal("0.00")
             try:
@@ -285,14 +285,16 @@ class CreateOrder(AssistantTool):
                 if product:
                     product_name = product.name
                     unit_price = getattr(product, "price", Decimal("0.00"))
-            except Exception:
-                pass
+                else:
+                    return {"error": f"Product not found: {product_id}. Use list_products to find valid product IDs."}
+            except ImportError:
+                return {"error": "Inventory module is not installed. Cannot resolve product IDs."}
 
             item = OrderItem(
                 hub_id=hub_id,
                 order_id=order.id,
                 product_id=product_id,
-                product_name=product_name or f"Product {product_id}",
+                product_name=product_name,
                 unit_price=unit_price,
                 quantity=item_data["quantity"],
                 notes=item_data.get("notes", ""),
@@ -674,7 +676,7 @@ class UpdateOrder(AssistantTool):
 @register_tool
 class DeleteOrder(AssistantTool):
     name = "delete_order"
-    description = "Delete an order permanently. Only pending or cancelled orders can be deleted."
+    description = "Soft-delete an order (marks as deleted). Only pending or cancelled orders without linked sales can be deleted."
     module_id = "commands"
     required_permission = "orders.delete_order"
     requires_confirmation = True
@@ -688,13 +690,22 @@ class DeleteOrder(AssistantTool):
     }
 
     async def execute(self, args: dict, request: Any, session: Any, hub_id: Any) -> dict:
+        from datetime import datetime
+
         o = await _q(Order, session, hub_id).get(args["order_id"])
         if o is None:
             return {"error": "Order not found"}
         if o.status not in ("pending", "cancelled"):
             return {"error": f"Cannot delete order in status '{o.status}'. Only pending or cancelled orders can be deleted."}
+
+        # Check if order is linked to a Sale (paid)
+        if o.sale_id is not None:
+            return {"error": "Cannot delete order linked to a sale. Void or refund the sale first."}
+
         order_number = o.order_number
-        await _q(Order, session, hub_id).hard_delete(o.id)
+        o.is_deleted = True
+        o.deleted_at = datetime.now(UTC)
+        await session.flush()
         return {"deleted": True, "order_number": order_number}
 
 
@@ -718,6 +729,32 @@ class DeleteKitchenStation(AssistantTool):
         s = await _q(KitchenStation, session, hub_id).get(args["station_id"])
         if s is None:
             return {"error": "Station not found"}
+
+        # Check for active product/category routing mappings
+        product_mappings = await _q(ProductStation, session, hub_id).filter(
+            ProductStation.station_id == s.id,
+        ).count()
+        category_mappings = await _q(CategoryStation, session, hub_id).filter(
+            CategoryStation.station_id == s.id,
+        ).count()
+        total_mappings = product_mappings + category_mappings
+        if total_mappings > 0:
+            return {
+                "error": (
+                    f"Cannot delete station '{s.name}' with {total_mappings} active routing mapping(s) "
+                    f"({product_mappings} product, {category_mappings} category). "
+                    "Reassign or remove the routings first using set_station_routing."
+                ),
+            }
+
+        # Check for active orders routed to this station
+        active_items = await _q(OrderItem, session, hub_id).filter(
+            OrderItem.station_id == s.id,
+            OrderItem.status.in_(["pending", "preparing"]),
+        ).count()
+        if active_items > 0:
+            return {"error": f"Cannot delete station '{s.name}' with {active_items} active order item(s) in progress."}
+
         name = s.name
         await _q(KitchenStation, session, hub_id).hard_delete(s.id)
         return {"deleted": True, "name": name}
