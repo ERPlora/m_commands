@@ -34,7 +34,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-CSRFToken': getCsrfToken(),
                     },
                     body: JSON.stringify(orderData),
                 });
@@ -48,7 +48,7 @@
                     // Fire the order to kitchen
                     await fetch('/m/commands/' + result.order_id + '/fire', {
                         method: 'POST',
-                        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                        headers: { 'X-CSRFToken': getCsrfToken() },
                     });
                 } else {
                     showToast(result.error || '{{ _("Error creating order") }}', 'error');

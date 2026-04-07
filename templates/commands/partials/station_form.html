@@ -71,7 +71,7 @@
         if (confirm('{{ _("Delete this station?") }}')) {
             fetch('/m/commands/stations/{{ station.id }}/delete', {
                 method: 'POST',
-                headers: {'X-CSRFToken': getCookie('csrftoken')}}).then(r => r.json()).then(data => {
+                headers: {'X-CSRFToken': getCsrfToken()}}).then(r => r.json()).then(data => {
                 if (data.success) {
                     htmx.ajax('GET', '/m/commands/stations', '#main-content-area');
                 }

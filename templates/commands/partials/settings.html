@@ -197,7 +197,7 @@ function resetSettings() {
     if (confirm('{{ _("Reset all settings to defaults?") }}')) {
         fetch('/m/commands/settings/reset', {
             method: 'POST',
-            headers: {'X-CSRFToken': getCookie('csrftoken')}}).then(r => {
+            headers: {'X-CSRFToken': getCsrfToken()}}).then(r => {
             if (r.ok) htmx.ajax('GET', '/m/commands/settings', '#main-content-area');
         });
     }

@@ -207,7 +207,7 @@
 function orderAction(url, action) {
     fetch(url, {
         method: 'POST',
-        headers: {'X-CSRFToken': getCookie('csrftoken')}}).then(r => r.json()).then(data => {
+        headers: {'X-CSRFToken': getCsrfToken()}}).then(r => r.json()).then(data => {
         if (data.success) {
             htmx.ajax('GET', '/m/commands/{{ order.id }}', '#main-content-area');
         }
@@ -220,7 +220,7 @@ function cancelOrder() {
         fetch('/m/commands/{{ order.id }}/cancel', {
             method: 'POST',
             headers: {
-                'X-CSRFToken': getCookie('csrftoken'),
+                'X-CSRFToken': getCsrfToken(),
                 'Content-Type': 'application/x-www-form-urlencoded'},
             body: 'reason=' + encodeURIComponent(reason)}).then(r => r.json()).then(data => {
             if (data.success) {
@@ -234,7 +234,7 @@ function deleteOrder() {
     if (confirm('{{ _("Delete this order permanently?") }}')) {
         fetch('/m/commands/{{ order.id }}/delete', {
             method: 'POST',
-            headers: {'X-CSRFToken': getCookie('csrftoken')}}).then(r => r.json()).then(data => {
+            headers: {'X-CSRFToken': getCsrfToken()}}).then(r => r.json()).then(data => {
             if (data.success) {
                 htmx.ajax('GET', '/m/commands/active', '#main-content-area');
             }
