@@ -137,3 +137,48 @@ class TestStatusLabels:
         from commands.models import PRIORITY_CHOICES
         for p in PRIORITY_CHOICES:
             assert p in PRIORITY_LABELS
+
+
+class TestTableNames:
+    """Verify DB table names use the kitchen_orders_ prefix (Fase 5 rename)."""
+
+    def test_order_tablename(self):
+        from commands.models import Order
+        assert Order.__tablename__ == "kitchen_orders_order"
+
+    def test_order_item_tablename(self):
+        from commands.models import OrderItem
+        assert OrderItem.__tablename__ == "kitchen_orders_order_item"
+
+    def test_order_modifier_tablename(self):
+        from commands.models import OrderModifier
+        assert OrderModifier.__tablename__ == "kitchen_orders_order_modifier"
+
+    def test_kitchen_station_tablename(self):
+        from commands.models import KitchenStation
+        assert KitchenStation.__tablename__ == "kitchen_orders_station"
+
+    def test_product_station_tablename(self):
+        from commands.models import ProductStation
+        assert ProductStation.__tablename__ == "kitchen_orders_product_station"
+
+    def test_category_station_tablename(self):
+        from commands.models import CategoryStation
+        assert CategoryStation.__tablename__ == "kitchen_orders_category_station"
+
+    def test_settings_tablename(self):
+        from commands.models import OrdersSettings
+        assert OrdersSettings.__tablename__ == "kitchen_orders_settings"
+
+
+class TestModuleID:
+    """Verify MODULE_ID is kitchen_orders (Fase 5 rename)."""
+
+    def test_module_id(self):
+        import commands.module as m
+        assert m.MODULE_ID == "kitchen_orders"
+
+    def test_module_version_major(self):
+        import commands.module as m
+        major = int(m.MODULE_VERSION.split(".")[0])
+        assert major >= 3, f"Expected major >= 3 after breaking rename, got {m.MODULE_VERSION}"

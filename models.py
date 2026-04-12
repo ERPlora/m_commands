@@ -4,8 +4,9 @@ Commands module models — SQLAlchemy 2.0.
 Models: OrdersSettings, KitchenStation, Order, OrderItem, OrderModifier,
         ProductStation, CategoryStation.
 
-NOTE: Table names use the 'orders_' prefix for DB compatibility with the
-original Django module (app_label = 'orders'). The module_id is 'commands'.
+NOTE: Table names use the 'kitchen_orders_' prefix (renamed from 'orders_' in
+migration 002). The Python package stays at 'commands/' to avoid git repo
+rename issues; the MODULE_ID is 'kitchen_orders'.
 """
 
 from __future__ import annotations
@@ -41,9 +42,9 @@ if TYPE_CHECKING:
 
 class OrdersSettings(HubBaseModel):
     """Per-hub configuration for commands module."""
-    __tablename__ = "commands_settings"
+    __tablename__ = "kitchen_orders_settings"
     __table_args__ = (
-        UniqueConstraint("hub_id", name="uq_commands_settings_hub"),
+        UniqueConstraint("hub_id", name="uq_kitchen_orders_settings_hub"),
     )
 
     # Kitchen display settings
@@ -86,10 +87,10 @@ class KitchenStation(HubBaseModel):
     Kitchen station for routing orders.
     Examples: Bar, Grill, Fryer, Dessert, Cold Kitchen.
     """
-    __tablename__ = "orders_kitchen_station"
+    __tablename__ = "kitchen_orders_station"
     __table_args__ = (
-        UniqueConstraint("hub_id", "name", name="uq_kitchen_station_hub_name"),
-        Index("ix_kitchen_station_hub_active", "hub_id", "is_active"),
+        UniqueConstraint("hub_id", "name", name="uq_kitchen_orders_station_hub_name"),
+        Index("ix_kitchen_orders_station_hub_active", "hub_id", "is_active"),
     )
 
     name: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -154,11 +155,11 @@ PRIORITY_LABELS = {
 
 class Order(HubBaseModel):
     """Restaurant/retail order ticket."""
-    __tablename__ = "orders_order"
+    __tablename__ = "kitchen_orders_order"
     __table_args__ = (
-        Index("ix_orders_order_hub_status", "hub_id", "status"),
-        Index("ix_orders_order_hub_created", "hub_id", "created_at"),
-        Index("ix_orders_order_hub_type", "hub_id", "order_type"),
+        Index("ix_kitchen_orders_order_hub_status", "hub_id", "status"),
+        Index("ix_kitchen_orders_order_hub_created", "hub_id", "created_at"),
+        Index("ix_kitchen_orders_order_hub_type", "hub_id", "order_type"),
     )
 
     # Identification
@@ -307,17 +308,17 @@ ITEM_STATUS_CHOICES = ("pending", "preparing", "ready", "served", "cancelled")
 
 class OrderItem(HubBaseModel):
     """Individual item in an order, routed to a kitchen station."""
-    __tablename__ = "orders_order_item"
+    __tablename__ = "kitchen_orders_order_item"
     __table_args__ = (
-        Index("ix_order_item_status", "hub_id", "status"),
-        Index("ix_order_item_station_status", "hub_id", "station_id", "status"),
+        Index("ix_kitchen_orders_item_status", "hub_id", "status"),
+        Index("ix_kitchen_orders_item_station_status", "hub_id", "station_id", "status"),
     )
 
     order_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid, ForeignKey("orders_order.id", ondelete="CASCADE"), nullable=False,
+        Uuid, ForeignKey("kitchen_orders_order.id", ondelete="CASCADE"), nullable=False,
     )
     station_id: Mapped[uuid.UUID | None] = mapped_column(
-        Uuid, ForeignKey("orders_kitchen_station.id", ondelete="SET NULL"), nullable=True,
+        Uuid, ForeignKey("kitchen_orders_station.id", ondelete="SET NULL"), nullable=True,
     )
     product_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, nullable=True,
@@ -397,10 +398,10 @@ class OrderItem(HubBaseModel):
 
 class OrderModifier(HubBaseModel):
     """Modifier applied to an order item (extra toppings, cooking preferences)."""
-    __tablename__ = "orders_order_modifier"
+    __tablename__ = "kitchen_orders_order_modifier"
 
     order_item_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid, ForeignKey("orders_order_item.id", ondelete="CASCADE"), nullable=False,
+        Uuid, ForeignKey("kitchen_orders_order_item.id", ondelete="CASCADE"), nullable=False,
     )
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     price: Mapped[Decimal] = mapped_column(
@@ -422,14 +423,14 @@ class OrderModifier(HubBaseModel):
 
 class ProductStation(HubBaseModel):
     """Maps a product to a kitchen station for automatic routing."""
-    __tablename__ = "orders_product_station"
+    __tablename__ = "kitchen_orders_product_station"
     __table_args__ = (
-        UniqueConstraint("hub_id", "product_id", name="uq_product_station_hub_product"),
+        UniqueConstraint("hub_id", "product_id", name="uq_kitchen_orders_product_station_hub_product"),
     )
 
     product_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
     station_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid, ForeignKey("orders_kitchen_station.id", ondelete="CASCADE"), nullable=False,
+        Uuid, ForeignKey("kitchen_orders_station.id", ondelete="CASCADE"), nullable=False,
     )
 
     # Relationships
@@ -441,14 +442,14 @@ class ProductStation(HubBaseModel):
 
 class CategoryStation(HubBaseModel):
     """Maps a product category to a kitchen station for automatic routing."""
-    __tablename__ = "orders_category_station"
+    __tablename__ = "kitchen_orders_category_station"
     __table_args__ = (
-        UniqueConstraint("hub_id", "category_id", name="uq_category_station_hub_category"),
+        UniqueConstraint("hub_id", "category_id", name="uq_kitchen_orders_category_station_hub_category"),
     )
 
     category_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
     station_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid, ForeignKey("orders_kitchen_station.id", ondelete="CASCADE"), nullable=False,
+        Uuid, ForeignKey("kitchen_orders_station.id", ondelete="CASCADE"), nullable=False,
     )
 
     # Relationships

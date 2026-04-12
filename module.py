@@ -4,18 +4,18 @@ Kitchen Orders Module Configuration
 Production command management for kitchens, workshops, bakeries, and factories.
 Tracks items through preparation stations with real-time status updates.
 
-NOTE: MODULE_ID="commands" and the underlying Python package name are kept as-is
-to maintain backward compatibility with existing installations and hub_module rows
-in production. The public display name is "Kitchen Orders".
+NOTE: The Python package directory remains 'commands/' to avoid git repo rename issues.
+The MODULE_ID is 'kitchen_orders' (logical identifier used in hub_module, S3 keys,
+and cross-module DEPENDENCIES). DB tables use the 'kitchen_orders_' prefix.
 """
 
 
 # ---------------------------------------------------------------------------
 # Module identity
 # ---------------------------------------------------------------------------
-MODULE_ID = "commands"
+MODULE_ID = "kitchen_orders"
 MODULE_NAME = "Kitchen Orders"
-MODULE_VERSION = "2.2.1"
+MODULE_VERSION = "3.0.0"
 MODULE_ICON = "clipboard-outline"
 MODULE_DESCRIPTION = "Production commands — kitchens, workshops, bakeries, factories"
 MODULE_AUTHOR = "ERPlora"
