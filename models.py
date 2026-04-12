@@ -282,7 +282,9 @@ class Order(HubBaseModel):
         if items is None:
             items = [i for i in self.items if not i.is_deleted]
         self.subtotal = sum((item.total for item in items), Decimal("0.00"))
-        self.total = self.subtotal - self.discount + self.tax
+        discount = self.discount if self.discount is not None else Decimal("0.00")
+        tax = self.tax if self.tax is not None else Decimal("0.00")
+        self.total = self.subtotal - discount + tax
         return self.total
 
     # ---- Number generation ----
