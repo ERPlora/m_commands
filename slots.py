@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app.core.slots import SlotRegistry
 
-MODULE_ID = "commands"
+MODULE_ID = "kitchen_orders"
 
 
 def register_slots(slots: SlotRegistry, module_id: str) -> None:

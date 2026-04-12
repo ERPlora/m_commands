@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-MODULE_ID = "commands"
+MODULE_ID = "kitchen_orders"
 
 
 def register_hooks(hooks: HookRegistry, module_id: str) -> None:
